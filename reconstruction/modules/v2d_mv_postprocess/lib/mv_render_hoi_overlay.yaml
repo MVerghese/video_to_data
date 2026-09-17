@@ -1,0 +1,21 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+rig_config: stereo-4
+cameras: [0, 2, 4, 6]
+
+camera_params_path: ???
+rgb_dir: ???
+object_mesh_path: null
+object_pose_dir: null
+human_pose_dir: null
+output_dir: ???
+
+rgb_path_template: "${rgb_dir}/{cam_name}.mp4"
+object_pose_path: null
+mhr_mesh_mv_path: null
+
+tile_shape: [2, 2]
+tile_image_size: [768, 576]
+render_workers: 4
+profile: false
+progress_interval: 0.1
