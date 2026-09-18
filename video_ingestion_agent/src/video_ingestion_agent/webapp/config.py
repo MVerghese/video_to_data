@@ -62,8 +62,8 @@ class AppConfig:
     llm_backend: str = "api"
     embedding_model: str = "google/siglip2-base-patch16-256"
     api_key: str | None = None
-    # Endpoint override for the 'api' backend; None -> APIModel's built-in
-    # NVIDIA Inference API endpoint.
+    # Required endpoint for the 'api' backend; configure your provider's
+    # chat/completions URL and matching model identifier.
     api_url: str | None = None
 
     # vLLM backend settings (only used when llm_backend == "vllm")
