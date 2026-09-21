@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+  <script src="./leaderboard.js" defer></script>
 </head>
 <body>
 <x-dc>
@@ -444,12 +445,11 @@
         <h2 style="font-size: 28px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 300; margin: 0; position: sticky; top: 100px;">Leaderboard</h2>
       </div>
       <div>
-      <div style="border: 1px solid var(--border-color-base); padding: 88px 40px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;">
-        <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-color-secondary);">Not yet open</div>
-        <div style="font-size: 24px; font-weight: 500;">Leaderboards open September 21</div>
-        <div style="font-size: 16px; color: var(--text-color-secondary); max-width: 52ch;">One leaderboard per track, live from the data release until the freeze on <time datetime="2026-11-04T17:00:00-05:00">Wednesday, November 4, 2026, at 5:00 p.m. EST</time>.</div>
-        <div style="font-size: 16px; color: var(--text-color-secondary); max-width: 52ch;">Each team may submit up to five times per week, with unlimited submissions during the final three days.</div>
-      </div>
+      <div style="font-size: 16px; color: var(--text-color-secondary); max-width: 68ch; margin-bottom: 28px;">Live from the data release until the freeze on <time datetime="2026-11-04T17:00:00-05:00">Wednesday, November 4, 2026, at 5:00 p.m. EST</time>. <strong style="font-weight: 600;">Standings here may take up to 24 hours to reflect a new submission</strong>; your score appears on the Kaggle competition page as soon as it is computed. Track 2 is scored separately at each of its three input tiers, because each tier supplies a different reference trajectory and scores across tiers are not comparable. Each team may submit up to five times per week, with unlimited submissions during the final three days.</div>
+      <div id="v2d-leaderboard" data-src="./leaderboard.json"></div>
+      <noscript>
+        <div style="border: 1px solid var(--border-color-base); padding: 40px; text-align: center; color: var(--text-color-secondary);">The leaderboard needs JavaScript. Standings are also visible on each competition&rsquo;s Kaggle page.</div>
+      </noscript>
       </div>
     </div>
   </section>
