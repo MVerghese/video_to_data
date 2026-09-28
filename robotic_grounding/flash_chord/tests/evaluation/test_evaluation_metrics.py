@@ -520,7 +520,6 @@ def test_relative_position_error_is_zero_for_a_perfect_rollout():
 
 
 def test_relative_position_error_is_zero_for_a_single_object():
-    """One object has no relative pose error to score."""
     from flash_chord.evaluation.metrics import relative_position_error_cm
 
     achieved, reference, _ = _two_object_cohort()
@@ -536,13 +535,10 @@ def test_relative_position_error_is_invariant_to_moving_the_whole_scene():
     achieved, reference, object_ids = _two_object_cohort()
     achieved[..., :3] += np.asarray([0.3, -0.2, 0.1])
 
-    # Not exactly zero: (a + c) - (b + c) is not bitwise (a - b). The residue is ~1e-15 cm,
-    # which is ten picometres, so a picometre bound is still an exact-invariance assertion.
     assert relative_position_error_cm(achieved, reference, object_ids) == pytest.approx(0.0, abs=1e-9)
 
 
 def test_relative_position_error_responds_to_the_first_object_orientation():
-    """It is a body-frame quantity. A world-frame implementation would report zero here."""
     from flash_chord.evaluation.metrics import relative_position_error_cm
 
     achieved, reference, object_ids = _two_object_cohort()
@@ -552,19 +548,17 @@ def test_relative_position_error_responds_to_the_first_object_orientation():
 
 
 def test_relative_position_error_is_reported_in_centimetres():
-    """A 1 cm offset of the second object reads as 1 cm, not 0.01."""
     from flash_chord.evaluation.metrics import relative_position_error_cm
 
     achieved, reference, object_ids = _two_object_cohort()
-    reference[:, 0, 3:] = np.asarray([0.0, 0.0, 0.0, 1.0])  # object 0 unrotated,
-    achieved[:, :, 0, 3:] = np.asarray([0.0, 0.0, 0.0, 1.0])  # so body frame == world frame
+    reference[:, 0, 3:] = np.asarray([0.0, 0.0, 0.0, 1.0])
+    achieved[:, :, 0, 3:] = np.asarray([0.0, 0.0, 0.0, 1.0])
     achieved[:, :, 1, 0] += 0.01
 
     assert relative_position_error_cm(achieved, reference, object_ids) == pytest.approx(1.0)
 
 
 def test_relative_position_error_pairs_objects_by_their_root_body():
-    """Two bodies of the same object are not a pair, so their relative error is zero."""
     from flash_chord.evaluation.metrics import relative_position_error_cm
 
     achieved, reference, _ = _two_object_cohort()

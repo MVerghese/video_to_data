@@ -227,7 +227,6 @@ def test_reference_success_requires_reaching_reference_end():
 
 
 def test_evaluation_code_sha256_is_stable_and_covers_every_scoring_module(tmp_path):
-    """The digest must change when the maths changes, which means covering metrics.py."""
     import hashlib
     from pathlib import Path
 
@@ -272,7 +271,6 @@ def test_evaluation_provenance_identifies_the_run(tmp_path):
 
 
 def test_evaluation_provenance_omits_what_it_cannot_determine(tmp_path):
-    """A reference with no episode in its name, and a script that is not there, must not raise."""
     from flash_chord.evaluation.harness import evaluation_provenance
 
     checkpoint = tmp_path / "checkpoint"

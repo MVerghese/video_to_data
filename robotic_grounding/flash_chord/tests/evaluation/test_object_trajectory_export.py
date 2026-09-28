@@ -78,11 +78,6 @@ def _minimal_rollout():
 
 
 def test_object_trajectory_export_records_provenance_in_schema_metadata(tmp_path):
-    """A submitted trajectory must be traceable to the run that produced it.
-
-    The leaderboard submission format is a flat table with nowhere to carry which checkpoint and
-    which evaluation code produced the poses, so it rides in the parquet metadata.
-    """
     from flash_chord.evaluation.rollout import write_object_trajectories_parquet
 
     output = write_object_trajectories_parquet(
@@ -103,13 +98,11 @@ def test_object_trajectory_export_records_provenance_in_schema_metadata(tmp_path
     assert metadata[b"flash_chord.eval_code_sha256"] == b"d" * 64
     assert metadata[b"flash_chord.episode_index"] == b"7"
     assert metadata[b"flash_chord.reference_parquet"].endswith(b"episode_000007.parquet")
-    # The descriptive metadata must survive the merge.
     assert metadata[b"flash_chord.schema"] == b"flash_chord_object_trajectories_v1"
     assert metadata[b"flash_chord.quaternion_order"] == b"xyzw"
 
 
 def test_object_trajectory_export_omits_empty_provenance_values(tmp_path):
-    """An absent digest must be absent, not an empty string that reads as 'recorded as blank'."""
     from flash_chord.evaluation.rollout import write_object_trajectories_parquet
 
     output = write_object_trajectories_parquet(

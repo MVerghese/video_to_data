@@ -120,17 +120,12 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-#: The modules whose contents decide the reported numbers. Hashing the entry-point script alone
-#: would not notice a change in metrics.py, which is where the scores actually come from.
+#: Modules included in the evaluation-code digest.
 _EVALUATION_CODE_MODULES = ("__init__.py", "harness.py", "metrics.py", "rollout.py")
 
 
 def evaluation_code_sha256() -> str:
-    """Digest over the evaluation modules, identifying the code that produced a score.
-
-    Each module's name is folded in alongside its contents so a rename changes the digest, and the
-    list is sorted so the result does not depend on directory iteration order.
-    """
+    """Hash the evaluation module names and contents."""
     directory = Path(__file__).resolve().parent
     digest = hashlib.sha256()
     for name in sorted(_EVALUATION_CODE_MODULES):
@@ -146,16 +141,7 @@ def evaluation_provenance(
     parquet: str,
     eval_script: str | Path | None = None,
 ) -> dict[str, str]:
-    """What identifies one evaluation run, for embedding in the trajectory export.
-
-    A submitted trajectory is a flat table of numbers. Without this it cannot be traced back to a
-    checkpoint or to the code that scored it, which is exactly what auditing a leaderboard entry
-    needs, and the leaderboard submission format has nowhere else to carry it.
-
-    ``eval_script_sha256`` covers the entry-point script and ``eval_code_sha256`` covers the
-    evaluation modules. Both are recorded because they answer different questions: the first is
-    stable and easy to allowlist, the second actually changes when the scoring maths changes.
-    """
+    """Return checkpoint, evaluator, reference, and episode provenance."""
     provenance = {
         "checkpoint_sha256": file_sha256(checkpoint),
         "eval_code_sha256": evaluation_code_sha256(),
@@ -383,11 +369,7 @@ def evaluate_checkpoint(
     object_trajectories_output: str | Path | None = None,
     eval_script: str | Path | None = None,
 ) -> EvaluationOutcome:
-    """Score one actor checkpoint over ``world_count`` unassisted full-sequence attempts.
-
-    ``eval_script`` is the entry point that invoked this, recorded in the trajectory export's
-    provenance. The caller supplies it because only the caller knows its own path.
-    """
+    """Score a checkpoint and optionally export object trajectories."""
     import jax
     import jax.numpy as jnp
 
@@ -508,8 +490,6 @@ def evaluate_checkpoint(
         score_rollout(rollout, thresholds),
         chord_sr=reference_tracking.success_rate,
     )
-    # Computed once, before the export, so the trajectory and the report cannot disagree about
-    # which checkpoint they describe.
     provenance = evaluation_provenance(
         checkpoint=checkpoint_path,
         parquet=str(cfg.task.parquet),
@@ -563,7 +543,7 @@ def score_rollout(rollout: ObjectPoseRollout, thresholds: TrackingThresholds) ->
         rollout.object_body_names,
     )
     if rollout.non_finite_worlds:
-        # The recorder zeroes invalid worlds; those placeholders must not contribute to either MPPE result.
+        # Exclude zero-filled invalid worlds from both MPPE results.
         valid = np.ones(rollout.achieved_pose_w.shape[1], dtype=np.bool_)
         valid[list(rollout.non_finite_worlds)] = False
         metrics = replace(

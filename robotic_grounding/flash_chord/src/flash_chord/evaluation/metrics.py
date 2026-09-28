@@ -300,29 +300,14 @@ def relative_position_error_cm(
     reference_pose_w: np.ndarray,
     body_object_ids: np.ndarray,
 ) -> float:
-    """Multi-object relative position error in centimetres; 0.0 for a single object.
+    """Mean pairwise root-body position error in each first object's frame (cm).
 
-    For each pair of tracked objects, object B's position is expressed in object A's body frame
-    and compared against the same quantity on the reference::
-
-        || R_A^T (p_B - p_A)  -  R_A_ref^T (p_B_ref - p_A_ref) ||
-
-    Taking it in A's frame rather than the world frame is what makes it a *relative* error: it is
-    sensitive to how A is oriented, and invariant to translating the whole scene. It measures
-    whether the objects are placed correctly with respect to each other, which is what most
-    manipulation tasks actually require and what the per-object errors above cannot see.
-
-    Each object is represented by its root body, the first body carrying that object id, matching
-    the original implementation's fixed obj0/obj1 root pairing. Averaged over pairs, worlds and
-    frames. Reported in centimetres, as the CHORD paper does; the original returned metres.
+    Averages over pairs, worlds, and frames; returns 0.0 for fewer than two objects.
     """
     achieved, reference = _aligned_poses(achieved_pose_w, reference_pose_w)
     object_ids = _body_object_ids(body_object_ids, achieved.shape[2])
     roots = [int(np.flatnonzero(object_ids == oid)[0]) for oid in np.unique(object_ids)]
     if len(roots) < 2:
-        # No object pair means no relative error to get wrong, so a single-object episode scores
-        # 0.0 rather than NaN. This keeps the metric defined on every episode and every track, at
-        # the cost of scoring such episodes as perfect on this metric.
         return 0.0
 
     errors = []
@@ -332,25 +317,19 @@ def relative_position_error_cm(
             rotation_reference = _rotation_matrix(reference[:, :, first, 3:])
             delta = achieved[:, :, second, :3] - achieved[:, :, first, :3]
             delta_reference = reference[:, :, second, :3] - reference[:, :, first, :3]
-            # R^T v, batched over (step, world).
             local = np.einsum("twji,twj->twi", rotation, delta)
             local_reference = np.einsum("twji,twj->twi", rotation_reference, delta_reference)
             errors.append(np.linalg.norm(local - local_reference, axis=-1))
     return float(np.mean(np.stack(errors)) * 100.0)
 
 
-#: The six principal axis directions MPPE's keypoints lie along, in the order
-#: ``flash_chord/objectives/keypoints.py`` lists them.
+#: Body-frame directions of the six MPPE keypoints.
 _MPPE_KEYPOINT_DIRECTIONS = np.array(
     [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [-1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]],
     dtype=np.float64,
 )
 
-#: Radius the six keypoints sit at, in metres. 5 cm, confirmed by Shalin on 2026-09-18 as the
-#: authoritative value. It is not stated in the CHORD paper, and the training reward in
-#: ``objectives/keypoints.py`` uses unit vectors (only the relative gradient matters there), so
-#: re-deriving MPPE from that kernel lands 20x high. The radius is a lever arm on the orientation
-#: term, so it sets the scale of the number; do not change it without a new decision.
+#: MPPE keypoint radius in metres.
 MPPE_KEYPOINT_RADIUS_M = 0.05
 
 
@@ -358,25 +337,9 @@ def mean_per_point_error_cm(
     achieved_pose_w: np.ndarray,
     reference_pose_w: np.ndarray,
 ) -> float:
-    """Mean per-point position error over six object-frame keypoints, in centimetres.
+    """Mean reference error of six body-frame keypoints per object (cm).
 
-    Six points are rigidly attached to each object at :data:`MPPE_KEYPOINT_RADIUS_M` along its
-    body frame's principal axes, carried into the world by that object's pose, and compared point
-    for point against the same construction on the reference::
-
-        || (p + R v_k)  -  (p_ref + R_ref v_k) ||
-
-    averaged over the six points, the bodies, the worlds and the frames.
-
-    This is the geometry of ``object_keypoints_objective`` in ``flash_chord/objectives/
-    keypoints.py``, which is a *training reward*: it squares each distance, passes it through
-    ``shaped_objective`` and places the points at unit radius. A reported error is neither
-    squared nor shaped, and sits at 5 cm. Squaring changes which errors dominate the mean and the
-    radius scales the orientation contribution, so neither difference is cosmetic.
-
-    Because the points sit off the origin, orientation error appears as position error in the
-    same units: a rotation about the object's centre leaves ``p`` untouched but moves every
-    keypoint. Defined for a single object, so unlike RPE it never returns NaN.
+    Averages Euclidean distances over keypoints, bodies, worlds, and frames.
     """
     achieved, reference = _aligned_poses(achieved_pose_w, reference_pose_w)
     offsets = _MPPE_KEYPOINT_DIRECTIONS * MPPE_KEYPOINT_RADIUS_M

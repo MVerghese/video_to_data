@@ -72,11 +72,6 @@ def _object_trajectory_schema(rollout: ObjectPoseRollout, provenance: Mapping[st
         b"flash_chord.object_body_count": str(bodies).encode(),
         b"flash_chord.pose_width": str(width).encode(),
     }
-    # Provenance identifies which code and which checkpoint produced these poses, and which
-    # reference they were scored against. It rides in the file because a leaderboard submission
-    # is a flat table with nowhere else to carry it, and because a trajectory that cannot be
-    # traced back to a run is not auditable. Keys are namespaced like the rest; a None or empty
-    # value is dropped rather than written as an empty string that reads as "recorded as blank".
     for key, value in (provenance or {}).items():
         if value is None or str(value) == "":
             continue
@@ -139,15 +134,9 @@ def write_object_trajectories_parquet(
     step_chunk: int = 32,
     provenance: Mapping[str, object] | None = None,
 ) -> Path:
-    """Atomically write achieved and reference object poses for every step and environment.
+    """Atomically write step-major object trajectories with Parquet provenance.
 
-    Rows are ordered by step, environment, then reference object-body id. Poses use metres and
-    ``xyzw`` quaternions. A world that recorded any non-finite pose is retained with
-    ``environment_valid=false``; its achieved values are the scorer's sanitized zero poses.
-
-    ``provenance`` is written into the schema metadata under ``flash_chord.`` keys. See
-    :func:`flash_chord.evaluation.harness.evaluation_provenance` for the ones the harness
-    records: the checkpoint and evaluation-code digests, the reference parquet, and the episode.
+    Poses use metres and xyzw quaternions; invalid worlds remain flagged.
     """
     import pyarrow as pa
     import pyarrow.parquet as pq
