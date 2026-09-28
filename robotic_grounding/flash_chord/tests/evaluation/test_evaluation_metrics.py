@@ -495,3 +495,80 @@ def test_standard_deviations_track_spread_across_worlds_and_bodies():
     assert metrics.add_std_m > 0.0
     assert len(metrics.add_std_per_body_m) == BODIES
     assert metrics.mean_add_m == pytest.approx(offsets.mean(), abs=1e-9)
+
+
+def _two_object_cohort(steps=12, worlds=3, seed=5):
+    """A reference and a perturbed cohort with two single-body objects, xyzw quaternions."""
+    rng = np.random.default_rng(seed)
+    reference = np.zeros((steps, 2, 7))
+    reference[..., :3] = np.cumsum(rng.normal(0, 0.02, (steps, 2, 3)), axis=0)
+    axis = rng.normal(0, 1, (steps, 2, 3))
+    axis /= np.linalg.norm(axis, axis=-1, keepdims=True)
+    angle = rng.uniform(0, np.pi, (steps, 2))
+    reference[..., 3:6] = axis * np.sin(angle / 2)[..., None]
+    reference[..., 6] = np.cos(angle / 2)
+    achieved = np.repeat(reference[:, None], worlds, axis=1).copy()
+    return achieved, reference, np.asarray([0, 1], dtype=np.int64)
+
+
+def test_relative_position_error_is_zero_for_a_perfect_rollout():
+    from flash_chord.evaluation.metrics import relative_position_error_cm
+
+    achieved, reference, object_ids = _two_object_cohort()
+
+    assert relative_position_error_cm(achieved, reference, object_ids) == 0.0
+
+
+def test_relative_position_error_is_zero_for_a_single_object():
+    """One object has no relative pose error to score."""
+    from flash_chord.evaluation.metrics import relative_position_error_cm
+
+    achieved, reference, _ = _two_object_cohort()
+
+    value = relative_position_error_cm(achieved[:, :, :1], reference[:, :1], np.asarray([0], dtype=np.int64))
+
+    assert value == 0.0
+
+
+def test_relative_position_error_is_invariant_to_moving_the_whole_scene():
+    from flash_chord.evaluation.metrics import relative_position_error_cm
+
+    achieved, reference, object_ids = _two_object_cohort()
+    achieved[..., :3] += np.asarray([0.3, -0.2, 0.1])
+
+    # Not exactly zero: (a + c) - (b + c) is not bitwise (a - b). The residue is ~1e-15 cm,
+    # which is ten picometres, so a picometre bound is still an exact-invariance assertion.
+    assert relative_position_error_cm(achieved, reference, object_ids) == pytest.approx(0.0, abs=1e-9)
+
+
+def test_relative_position_error_responds_to_the_first_object_orientation():
+    """It is a body-frame quantity. A world-frame implementation would report zero here."""
+    from flash_chord.evaluation.metrics import relative_position_error_cm
+
+    achieved, reference, object_ids = _two_object_cohort()
+    achieved[:, :, 0, 3:] = np.asarray([0.0, 0.0, np.sin(np.pi / 4), np.cos(np.pi / 4)])
+
+    assert relative_position_error_cm(achieved, reference, object_ids) > 1.0
+
+
+def test_relative_position_error_is_reported_in_centimetres():
+    """A 1 cm offset of the second object reads as 1 cm, not 0.01."""
+    from flash_chord.evaluation.metrics import relative_position_error_cm
+
+    achieved, reference, object_ids = _two_object_cohort()
+    reference[:, 0, 3:] = np.asarray([0.0, 0.0, 0.0, 1.0])  # object 0 unrotated,
+    achieved[:, :, 0, 3:] = np.asarray([0.0, 0.0, 0.0, 1.0])  # so body frame == world frame
+    achieved[:, :, 1, 0] += 0.01
+
+    assert relative_position_error_cm(achieved, reference, object_ids) == pytest.approx(1.0)
+
+
+def test_relative_position_error_pairs_objects_by_their_root_body():
+    """Two bodies of the same object are not a pair, so their relative error is zero."""
+    from flash_chord.evaluation.metrics import relative_position_error_cm
+
+    achieved, reference, _ = _two_object_cohort()
+
+    value = relative_position_error_cm(achieved, reference, np.asarray([0, 0], dtype=np.int64))
+
+    assert value == 0.0
