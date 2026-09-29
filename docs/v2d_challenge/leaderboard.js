@@ -352,6 +352,11 @@
           return response.json();
         })
         .then(function (data) {
+          if (!data || !Array.isArray(data.tracks) || !data.tracks.some(function (track) {
+            return Array.isArray(track.metrics) && track.metrics.some(function (metric) {
+              return metric.available;
+            });
+          })) throw new Error("feed has no available metrics");
           // render() replaces the whole subtree, which drops focus and scroll position. The
           // board changes rarely, so only pay that cost when the payload actually differs.
           var next = JSON.stringify(data);
