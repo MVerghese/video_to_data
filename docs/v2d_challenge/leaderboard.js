@@ -1,20 +1,4 @@
-/*
- * V2D Challenge leaderboard.
- *
- * Drops into docs/v2d_challenge/ of github.com/nvidia-isaac/video_to_data. The page change is
- * two lines: a <script src="./leaderboard.js" defer></script> in <head>, and swapping the
- * "Not yet open" card inside <section id="leaderboard"> for
- *   <div id="v2d-leaderboard" data-src="<url of leaderboard.json>"></div>
- *
- * Written as plain DOM rather than as markup for the page's DC component framework. The
- * challenge page is a hand-authored 56 KB file that people edit; keeping the leaderboard in
- * its own file means a bot-refreshed table never collides with an editor's change, and the
- * rendering logic is reviewable on its own. It also means this file has no dependency on the
- * DC runtime's <sc-for> semantics.
- *
- * Data contract: see aggregate/v2d_aggregate.py. Anything the renderer needs is in the JSON,
- * so adding a metric or a track is a config change, not a code change here.
- */
+/* Render V2D Challenge standings and Kaggle metric links. */
 (function () {
   "use strict";
 
@@ -197,10 +181,6 @@
       "border:1px solid " + css.border +
         ";padding:88px 40px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center"
     );
-    card.appendChild(
-      el("div", "font-family:" + css.mono + ";font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:" +
-        css.muted, "Not yet open")
-    );
     card.appendChild(el("div", "font-size:24px;font-weight:500", message));
     if (detail) card.appendChild(el("div", "font-size:16px;color:" + css.muted + ";max-width:52ch", detail));
     return card;
@@ -209,7 +189,7 @@
   function render(mount, data, state) {
     mount.innerHTML = "";
     if (!data || !data.tracks || !data.tracks.length) {
-      mount.appendChild(renderEmpty("Leaderboards open September 21",
+      mount.appendChild(renderEmpty("No entries yet",
         "Standings appear here once submissions are scored. Track 2 is scored separately at "
         + "each of its three input tiers."));
       return;
@@ -227,7 +207,7 @@
       });
     });
     if (!tracks.length) {
-      mount.appendChild(renderEmpty("Leaderboards open September 21",
+      mount.appendChild(renderEmpty("No entries yet",
         "Standings appear here once submissions are scored. Track 2 is scored separately at "
         + "each of its three input tiers."));
       return;
@@ -282,6 +262,7 @@
       el("div", null, data.generated_at ? "Updated " + new Date(data.generated_at).toUTCString() : "")
     );
     var links = el("div", "display:flex;gap:14px;flex-wrap:wrap");
+    links.appendChild(el("span", null, "Links to live track leaderboards on Kaggle"));
     track.metrics.forEach(function (metric) {
       // Only link out when the slug really is a slug. The prefix already makes a
       // "javascript:" value inert, but refusing to build the URL at all means a typo in
