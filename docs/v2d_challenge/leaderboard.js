@@ -281,11 +281,6 @@
     footer.appendChild(links);
     mount.appendChild(footer);
 
-    if (track.warnings && track.warnings.length) {
-      mount.appendChild(
-        el("div", "margin-top:10px;font-size:13px;color:" + css.muted, track.warnings.join(" · "))
-      );
-    }
   }
 
   function boot() {
