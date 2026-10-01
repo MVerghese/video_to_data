@@ -127,14 +127,24 @@
     });
 
     var tbody = el("tbody");
-    rows.forEach(function (row, index) {
+    var participantRank = 0;
+    rows.forEach(function (row) {
+      var baseline = row.is_baseline === true;
+      if (!baseline) participantRank += 1;
       var tr = el("tr", "border-bottom:1px solid " + css.border);
       var cell = "padding:14px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums";
 
-      tr.appendChild(el("td", cell + ";text-align:left;color:" + css.muted + ";font-family:" + css.mono, index + 1));
+      tr.appendChild(el("td", cell + ";text-align:left;color:" + css.muted + ";font-family:" + css.mono, baseline ? "—" : participantRank));
 
       var teamCell = el("td", cell + ";text-align:left;white-space:normal");
-      var name = el("div", "font-weight:500;color:" + css.ink, row.team);
+      var name = el("div", "font-weight:" + (baseline ? "400" : "500") +
+        ";color:" + (baseline ? css.muted : css.ink), row.team);
+      if (baseline) {
+        name.appendChild(el("span",
+          "display:inline-block;margin-left:8px;padding:2px 7px;border:1px solid " + css.border +
+          ";border-radius:4px;font-size:11px;font-weight:400;color:" + css.muted,
+          "Baseline"));
+      }
       teamCell.appendChild(name);
       if (row.members && row.members.length) {
         teamCell.appendChild(
@@ -156,10 +166,10 @@
 
       available.forEach(function (metric) {
         var value = num(row.scores ? row.scores[metric.key] : null);
-        var strong = state.sortKey === metric.key;
+        var strong = !baseline && state.sortKey === metric.key;
         var td = el(
           "td",
-          cell + ";color:" + (value === null ? css.muted : css.ink) +
+          cell + ";color:" + (baseline || value === null ? css.muted : css.ink) +
             (strong ? ";font-weight:600" : ""),
           fmtScore(value)
         );
