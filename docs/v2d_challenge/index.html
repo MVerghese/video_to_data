@@ -251,6 +251,7 @@
           <div style="display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; margin-top: 28px;">
             <div style="display: flex; flex-direction: column; gap: 20px; max-width: 62ch;">
               <div style="font-size: 17px; line-height: 1.65; margin: 0; color: var(--text-color-secondary);"><div>Embodiment and simulator are fixed and provided: G1 + Dex3, so entries compete on retargeting and policy learning, not simulation engineering. Teams turn human demonstrations into robot policies at varying levels of noise and inaccuracy. This track identifies the tolerance of human-to-robot transfer pipelines to errors and noise from upstream reconstruction.</div></div>
+              <p style="font-size: 17px; line-height: 1.65; margin: 0; color: var(--text-color-secondary);">We have split Track 2 into 3 tiers based on the quality of the reference trajectory.</p>
               <div style="display: flex; flex-direction: column; gap: 1px; background: var(--border-color-base); border: 1px solid var(--border-color-base);">
                 <div style="background: #ffffff; padding: 16px 20px; display: grid; grid-template-columns: 92px 1fr; gap: 16px;">
                   <span style="font-family: var(--font-mono); font-size: 12px; color: var(--color-brand, #76b900);">TIER 1</span>
@@ -267,7 +268,7 @@
               </div>
               <p style="font-size: 17px; line-height: 1.65; margin: 0; color: var(--text-color-secondary);">Teams will be evaluated against the clean multi-view captioned object trajectory in all three tiers. For Tiers 2 and 3, teams are encouraged to propose methods for recovering better estimates of the object trajectory using anything <strong style="color: var(--text-color-primary); font-weight: 600;">other than the clean trajectory captions provided in Tier 1</strong>. For Tier 3, video to data provides CARI4D as an off the shelf solution.</p>
               <p style="font-size: 17px; line-height: 1.65; margin: 0; color: var(--text-color-secondary);"><strong style="color: var(--text-color-primary); font-weight: 600;">Submission.</strong> Teams will submit recorded evaluations of their trained policies using the eval_robotic_grounding.py script provided to produce the artifact for submission.</p>
-              <p style="font-size: 17px; line-height: 1.65; margin: 0; color: var(--text-color-secondary);"><strong style="color: var(--text-color-primary); font-weight: 600;">Evaluation.</strong> At each tier, submissions will be evaluated for object-tracking accuracy using AUC, SP-SR, MP-SR, and MPPE as defined in the CHORD manuscript. Strong performance on more challenging tiers will be weighted appropriately when awarding points.</p>
+              <p style="font-size: 17px; line-height: 1.65; margin: 0; color: var(--text-color-secondary);"><strong style="color: var(--text-color-primary); font-weight: 600;">Evaluation.</strong> At each tier, submissions will be evaluated for object-tracking accuracy using AUC, SP-SR, MP-SR, and MPPE as defined in the CHORD manuscript. Each tier is weighted equally when calculating final scores for this track.</p>
             </div>
             <div></div>
           </div>
