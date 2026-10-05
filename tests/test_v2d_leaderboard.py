@@ -44,10 +44,12 @@ setTimeout(() => {
       });
     });
     const note = document.getElementById('v2d-cari4d-baseline-note');
-    check(Boolean(note) === (track.key === 'track_1'), 'footnote scope/' + track.key);
-    if (track.key === 'track_1') {
+    const hasCari4d = track.key === 'track_1' || track.key === 'track_2_tier3';
+    check(Boolean(note) === hasCari4d, 'footnote scope/' + track.key);
+    const marker = rows().find(r => r.name.includes('Baseline') || r.name.includes('Basline')).element.querySelector('sup a');
+    check(Boolean(marker) === hasCari4d, 'asterisk scope/' + track.key);
+    if (hasCari4d) {
       check(note && note.textContent === '* ' + noteText, 'exact footnote text');
-      const marker = rows().find(r => r.name === 'CARI4D Basline').element.querySelector('sup a');
       check(marker && marker.textContent === '*' && marker.getAttribute('href') === '#v2d-cari4d-baseline-note', 'asterisk links to footnote');
     }
   });

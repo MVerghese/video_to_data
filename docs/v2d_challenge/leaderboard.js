@@ -77,7 +77,10 @@
   }
 
   function isCari4dBaseline(track, row) {
-    return track.key === "track_1" && row.is_baseline === true && /^CARI4D\b/i.test(row.team);
+    return row.is_baseline === true && (
+      (track.key === "track_1" && /^CARI4D\b/i.test(row.team)) ||
+      (track.key === "track_2_tier3" && /\bCARI4D Reconstruction\b/i.test(row.team))
+    );
   }
 
   function renderTable(track, state) {
