@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-NOTE = "We use a commercial friendly recreation of CARI4D. Performance may differ slightly from the original implementation."
+NOTE = "We use a commercial friendly recreation of CARI4D with retrained weights and some non-commercial modules replaced. Performance may differ slightly from the original implementation."
 
 CHECKS = r'''
 setTimeout(() => {
@@ -46,7 +46,9 @@ setTimeout(() => {
     const note = document.getElementById('v2d-cari4d-baseline-note');
     const hasCari4d = track.key === 'track_1' || track.key === 'track_2_tier3';
     check(Boolean(note) === hasCari4d, 'footnote scope/' + track.key);
-    const marker = rows().find(r => r.name.includes('Baseline') || r.name.includes('Basline')).element.querySelector('sup a');
+    const baseline = rows().find(r => r.name.includes('Baseline') || r.name.includes('Basline'));
+    check(baseline.name === (track.key === 'track_1' ? 'CARI4D (commercial) Baseline' : 'CHORD Baseline (CARI4D Reconstruction)'), 'baseline display name/' + track.key);
+    const marker = baseline.element.querySelector('sup a');
     check(Boolean(marker) === hasCari4d, 'asterisk scope/' + track.key);
     if (hasCari4d) {
       check(note && note.textContent === '* ' + noteText, 'exact footnote text');

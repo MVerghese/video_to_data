@@ -157,8 +157,10 @@
       tr.appendChild(el("td", cell + ";text-align:left;color:" + css.muted + ";font-family:" + css.mono, ranks.has(row) ? ranks.get(row) : "—"));
 
       var teamCell = el("td", cell + ";text-align:left;white-space:normal");
+      var teamName = track.key === "track_1" && isCari4dBaseline(track, row)
+        ? "CARI4D (commercial) Baseline" : row.team;
       var name = el("div", "font-weight:" + (baseline ? "400" : "500") +
-        ";color:" + (baseline ? css.muted : css.ink), row.team);
+        ";color:" + (baseline ? css.muted : css.ink), teamName);
       if (isCari4dBaseline(track, row)) {
         var marker = el("a", "color:inherit;text-decoration:none", "*");
         marker.href = "#v2d-cari4d-baseline-note";
@@ -320,7 +322,7 @@
     mount.appendChild(footer);
     if (track.rows.some(function (row) { return isCari4dBaseline(track, row); })) {
       var note = el("p", "margin:12px 0 0;font-size:13px;line-height:1.6;color:" + css.muted,
-        "* We use a commercial friendly recreation of CARI4D. Performance may differ slightly from the original implementation.");
+        "* We use a commercial friendly recreation of CARI4D with retrained weights and some non-commercial modules replaced. Performance may differ slightly from the original implementation.");
       note.id = "v2d-cari4d-baseline-note";
       mount.appendChild(note);
     }
