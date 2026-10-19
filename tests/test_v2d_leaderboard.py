@@ -1,4 +1,4 @@
-"""Exercise leaderboard sorting, tied ranks and baseline notes in Chrome."""
+"""Exercise leaderboard sorting, tied ranks, incomplete teams and baseline notes in Chrome."""
 
 import argparse
 import html
@@ -38,11 +38,19 @@ setTimeout(() => {
         const expected = direction === 'best' ? ['Alpha:1', 'Beta:2', 'Delta:2', 'Gamma:4'] : ['Gamma:4', 'Beta:2', 'Delta:2', 'Alpha:1'];
         check(JSON.stringify(participants.map(r => r.name + ':' + r.rank)) === JSON.stringify(expected), track.key + '/' + metric.key + '/' + direction);
         check(visible.find(r => r.name === 'Missing').rank === '—', 'missing score stays unranked');
+        check(visible.find(r => r.name === 'Incomplete').rank === '—', 'incomplete team is unranked');
+        check(visible.slice(-2).map(r => r.name).join() === 'Incomplete,Missing', 'incomplete teams sit below every complete team');
         check(visible[visible.length - 1].name === 'Missing', 'missing score stays last');
         check(visible.find(r => r.name.includes('Baseline') || r.name.includes('Basline')).rank === '—', 'baseline stays unranked');
         directionsChecked++;
       });
     });
+    const named = name => rows().find(r => r.name === name).element.querySelectorAll('td');
+    const colour = name => getComputedStyle(named(name)[1].querySelector('div')).color;
+    const baselineName = rows().find(r => r.name.includes('Baseline') || r.name.includes('Basline')).name;
+    check(colour('Incomplete') === colour(baselineName) && colour('Incomplete') !== colour('Alpha'), 'incomplete team is greyed out/' + track.key);
+    check([...named('Incomplete')].slice(2, -1).every(td => getComputedStyle(td).color === colour(baselineName)), 'incomplete scores are greyed out/' + track.key);
+    check(named('Incomplete')[1].textContent.includes('no entry for'), 'incomplete team names its missing metrics/' + track.key);
     const note = document.getElementById('v2d-cari4d-baseline-note');
     const hasCari4d = track.key === 'track_1' || track.key === 'track_2_tier3';
     check(Boolean(note) === hasCari4d, 'footnote scope/' + track.key);
@@ -75,6 +83,9 @@ def main():
             return {m['key']: 4 - position if m['higher_is_better'] else position for m in track['metrics']}
         track['rows'] = [{'team': name, 'scores': scores(i)} for i, name in enumerate(['Alpha', 'Beta', 'Gamma'], 1)]
         track['rows'].append({'team': 'Delta', 'scores': scores(2)})  # ties Beta, so Gamma ranks 4th
+        first = track['metrics'][0]['key']
+        track['rows'].append({'team': 'Incomplete', 'scores': {first: scores(5)[first]},
+                              'missing': [m['key'] for m in track['metrics'][1:]]})
         track['rows'] += [{'team': 'Missing', 'scores': {}}, {
             'team': 'CARI4D Basline' if track['key'] == 'track_1' else 'CHORD Baseline (CARI4D Reconstruction)',
             'scores': scores(1.5), 'is_baseline': True,

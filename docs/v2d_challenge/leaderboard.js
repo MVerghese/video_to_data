@@ -63,6 +63,14 @@
     return direction === "asc" ? x - y : y - x;
   }
 
+  /* A team without a score on every metric is not ranked. It is listed below every complete
+     team and greyed out like a baseline, so a single entry does not read as a full submission. */
+  function isIncomplete(track, row) {
+    return row.is_baseline !== true && track.metrics.some(function (metric) {
+      return metric.available && num(row.scores ? row.scores[metric.key] : null) === null;
+    });
+  }
+
   /* Standard competition ranking: teams with the same score share a rank, and the next team
      skips past them, so four teams tied for first are all 1 and the fifth is 5. */
   function canonicalRanks(track, metric) {
@@ -71,7 +79,7 @@
     var previousScore = null;
     var previousRank = 0;
     track.rows.filter(function (row) {
-      return row.is_baseline !== true && num(row.scores[metric.key]) !== null;
+      return row.is_baseline !== true && !isIncomplete(track, row) && num(row.scores[metric.key]) !== null;
     }).sort(function (a, b) {
       return compare(a, b, metric.key, metric.higher_is_better === false ? "asc" : "desc");
     }).forEach(function (row, index) {
@@ -150,6 +158,8 @@
     table.appendChild(thead);
 
     var rows = track.rows.slice().sort(function (a, b) {
+      var aIncomplete = isIncomplete(track, a);
+      if (aIncomplete !== isIncomplete(track, b)) return aIncomplete ? 1 : -1;
       return compare(a, b, state.sortKey, state.sortDir);
     });
 
@@ -158,6 +168,7 @@
     var tbody = el("tbody");
     rows.forEach(function (row) {
       var baseline = row.is_baseline === true;
+      var muted = baseline || isIncomplete(track, row);
       var tr = el("tr", "border-bottom:1px solid " + css.border);
       var cell = "padding:14px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums";
 
@@ -166,8 +177,8 @@
       var teamCell = el("td", cell + ";text-align:left;white-space:normal");
       var teamName = track.key === "track_1" && isCari4dBaseline(track, row)
         ? "CARI4D (commercial) Baseline" : row.team;
-      var name = el("div", "font-weight:" + (baseline ? "400" : "500") +
-        ";color:" + (baseline ? css.muted : css.ink), teamName);
+      var name = el("div", "font-weight:" + (muted ? "400" : "500") +
+        ";color:" + (muted ? css.muted : css.ink), teamName);
       if (isCari4dBaseline(track, row)) {
         var marker = el("a", "color:inherit;text-decoration:none", "*");
         marker.href = "#v2d-cari4d-baseline-note";
@@ -203,10 +214,10 @@
 
       available.forEach(function (metric) {
         var value = num(row.scores ? row.scores[metric.key] : null);
-        var strong = !baseline && state.sortKey === metric.key;
+        var strong = !muted && state.sortKey === metric.key;
         var td = el(
           "td",
-          cell + ";color:" + (baseline || value === null ? css.muted : css.ink) +
+          cell + ";color:" + (muted || value === null ? css.muted : css.ink) +
             (strong ? ";font-weight:600" : ""),
           fmtScore(value)
         );
