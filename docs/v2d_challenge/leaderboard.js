@@ -63,15 +63,22 @@
     return direction === "asc" ? x - y : y - x;
   }
 
+  /* Standard competition ranking: teams with the same score share a rank, and the next team
+     skips past them, so four teams tied for first are all 1 and the fifth is 5. */
   function canonicalRanks(track, metric) {
     var ranks = new Map();
     if (!metric) return ranks;
+    var previousScore = null;
+    var previousRank = 0;
     track.rows.filter(function (row) {
       return row.is_baseline !== true && num(row.scores[metric.key]) !== null;
     }).sort(function (a, b) {
       return compare(a, b, metric.key, metric.higher_is_better === false ? "asc" : "desc");
     }).forEach(function (row, index) {
-      ranks.set(row, index + 1);
+      var score = num(row.scores[metric.key]);
+      if (score !== previousScore) previousRank = index + 1;
+      previousScore = score;
+      ranks.set(row, previousRank);
     });
     return ranks;
   }

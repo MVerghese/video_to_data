@@ -1,4 +1,4 @@
-"""Exercise leaderboard sorting and baseline notes in Chrome."""
+"""Exercise leaderboard sorting, tied ranks and baseline notes in Chrome."""
 
 import argparse
 import html
@@ -34,8 +34,8 @@ setTimeout(() => {
       ['best', 'reverse'].forEach(direction => {
         if (direction === 'reverse') header().click();
         const visible = rows();
-        const participants = visible.filter(r => ['Alpha', 'Beta', 'Gamma'].includes(r.name));
-        const expected = direction === 'best' ? ['Alpha:1', 'Beta:2', 'Gamma:3'] : ['Gamma:3', 'Beta:2', 'Alpha:1'];
+        const participants = visible.filter(r => ['Alpha', 'Beta', 'Delta', 'Gamma'].includes(r.name));
+        const expected = direction === 'best' ? ['Alpha:1', 'Beta:2', 'Delta:2', 'Gamma:4'] : ['Gamma:4', 'Beta:2', 'Delta:2', 'Alpha:1'];
         check(JSON.stringify(participants.map(r => r.name + ':' + r.rank)) === JSON.stringify(expected), track.key + '/' + metric.key + '/' + direction);
         check(visible.find(r => r.name === 'Missing').rank === '—', 'missing score stays unranked');
         check(visible[visible.length - 1].name === 'Missing', 'missing score stays last');
@@ -74,6 +74,7 @@ def main():
         def scores(position):
             return {m['key']: 4 - position if m['higher_is_better'] else position for m in track['metrics']}
         track['rows'] = [{'team': name, 'scores': scores(i)} for i, name in enumerate(['Alpha', 'Beta', 'Gamma'], 1)]
+        track['rows'].append({'team': 'Delta', 'scores': scores(2)})  # ties Beta, so Gamma ranks 4th
         track['rows'] += [{'team': 'Missing', 'scores': {}}, {
             'team': 'CARI4D Basline' if track['key'] == 'track_1' else 'CHORD Baseline (CARI4D Reconstruction)',
             'scores': scores(1.5), 'is_baseline': True,
